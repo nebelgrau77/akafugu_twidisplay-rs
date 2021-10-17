@@ -1,0 +1,10 @@
+**/*.rs.bk
+.#*
+/target/
+Cargo.lock
+.gdb_history
+*.bin
+*.hex
+*.elf
+/examples/**/target
+
