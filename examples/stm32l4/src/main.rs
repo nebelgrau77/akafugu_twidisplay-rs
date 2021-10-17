@@ -53,7 +53,7 @@ fn main() -> ! {
     display.clear_display().unwrap();
     //display.display_address().unwrap();
 
-    display.set_brightness(160).unwrap();
+    display.set_brightness(64).unwrap();
 
     let mut num: u8 = 0;
 
@@ -71,7 +71,8 @@ fn main() -> ! {
 
         //display.display_digit(3, num).unwrap();
 
-        display.display_number(7707).unwrap();
+        display.display_temperature(120,TempUnit::F).unwrap();
+        //display.display_number(7707).unwrap();
 
         led.set_low().ok();
 

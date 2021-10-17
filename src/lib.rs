@@ -112,12 +112,14 @@ const DEVICE_ADDRESS: u8 = 0x12; // this is the main I2C address, but there can 
 #[derive(Copy, Clone, Debug)]
 
 // THIS DOESN'T SEEM NECESSARY
-pub enum Control {    
-    /// Enable some feature, eg. timer 
-    On, 
-    /// Disable some feature, eg. timer
-    Off,     
+pub enum TempUnit {    
+    /// Celsius degrees 
+    C, 
+    /// Fahrenheit degrees
+    F,     
 }
+
+
 
 // THIS SHOULD CONTAIN THE ADDRESS AS WELL, LIKE IN THE LPS DRIVER
 /// TWIDisplay driver
@@ -180,6 +182,57 @@ where
         Ok(())
     }
     
+    /// Display temperature with a unit and a minus sign if necessary
+    pub fn display_temperature(&mut self, temperature: i8, unit: TempUnit) -> Result<(), Error<E>> {
+
+        if temperature < (-99) {
+            for (pos,ch) in "-LO-".chars().enumerate() {
+                self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, pos as u8, ch as u8]).map_err(Error::I2C);
+            }    
+            Ok(())
+        } else if temperature > 99 {
+            for (pos,ch) in "-HI-".chars().enumerate() {
+                self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, pos as u8, ch as u8]).map_err(Error::I2C);
+            }    
+            Ok(())
+        } else {
+
+        
+
+            
+            match temperature {
+                t if t < 0 => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, '-' as u8]).map_err(Error::I2C),
+                _ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, ' ' as u8]).map_err(Error::I2C),
+            };
+
+            self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, (temperature.abs() / 10) as u8]).map_err(Error::I2C);
+            self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 2, (temperature.abs()  % 10) as u8]).map_err(Error::I2C);
+
+            match unit {
+                TempUnit::F => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'F' as u8]).map_err(Error::I2C),
+                TempUnit::C => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'C' as u8]).map_err(Error::I2C),
+                _ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, ' ' as u8]).map_err(Error::I2C),
+                
+            };
+
+            Ok(())
+
+        }
+
+
+
+
+        // if temperature < -99 print '-LO-'                DONE!
+        // if temperature < 0 print '-25C' or '-10F'        DONE!
+        // if temperature > 99 print '-HI-'                 DONE!
+        // else print ' 25C'                                DONE!
+        // don't print leading zeros
+        
+   
+        
+    }
+
+
     /// Get digits from a number
     fn get_digits(number: u16) -> [u8;4] {
         let mut data = number;
