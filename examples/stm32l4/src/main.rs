@@ -71,7 +71,7 @@ fn main() -> ! {
 
         //display.display_digit(3, num).unwrap();
 
-        display.display_temperature(120,TempUnit::F).unwrap();
+        display.display_temperature(0,TempUnit::C).unwrap();
         //display.display_number(7707).unwrap();
 
         led.set_low().ok();

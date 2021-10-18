@@ -16,6 +16,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Setting brightness level
 - Displaying a single digit at a given position
 - Displaying a number using all the digits (with leading zeros)
-- Displaying temperature with a chosen unit
+- Displaying temperature with a chosen unit, no leading zeros, minus sign, HI/LO if more than 2 digits
 
 [0.0.1]: https://github.com/nebelgrau77/akafugu_twidisplay-rs/releases/tag/v0.0.1

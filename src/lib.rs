@@ -31,12 +31,12 @@ GENERAL:
 
 COMMANDS:
 DONE: - brightness setting, takes one argument 0-255 DONE
-- address setting: takes one argument, actually can be anything between 0-127, so it can't be an enum, must be a number...
+- address setting: takes one argument, actually can be anything between 0-127, so it can't be an enum, must be a number, with a match 
 DONE: - clearing the display
 - scroll/rotate mode: takes one argument, 0 or 1 (rotate/scroll) - this one can use an enum
 - dots setting
 - getting firmware revision
-- getting number 
+- getting number of digits
 DONE: - display current I2C address
 
 not tested by me yet: 
@@ -46,11 +46,11 @@ not tested by me yet:
 - time setting - doesn't seem to be working
 
 FUNCTIONS:
-- send digit
+DONE - send digit
 - send character
 - send string
 - display time (hh:mm:ss with a blinking dot)
-- display temperature (with a choice of C or F unit)
+DONE - display temperature (with a choice of C or F unit)
 
 
 */
@@ -196,40 +196,34 @@ where
             }    
             Ok(())
         } else {
-
-        
-
             
-            match temperature {
-                t if t < 0 => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, '-' as u8]).map_err(Error::I2C),
-                _ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, ' ' as u8]).map_err(Error::I2C),
-            };
+        match temperature {
+            t if t < 0 => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, '-' as u8]).map_err(Error::I2C),
+            _ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, ' ' as u8]).map_err(Error::I2C),
+        };
 
-            self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, (temperature.abs() / 10) as u8]).map_err(Error::I2C);
-            self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 2, (temperature.abs()  % 10) as u8]).map_err(Error::I2C);
+        // insert a match here: if the decimal digits are zero, use a blank
 
-            match unit {
-                TempUnit::F => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'F' as u8]).map_err(Error::I2C),
-                TempUnit::C => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'C' as u8]).map_err(Error::I2C),
-                _ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, ' ' as u8]).map_err(Error::I2C),
+        let decimals: u8 = (temperature.abs() / 10) as u8; 
+
+        match decimals {
+            0 => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, ' ' as u8]).map_err(Error::I2C),
+            _ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, decimals]).map_err(Error::I2C),
+            }
+        };
+
+        //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, (temperature.abs() / 10) as u8]).map_err(Error::I2C);
+        self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 2, (temperature.abs()  % 10) as u8]).map_err(Error::I2C);
+
+        match unit {
+            TempUnit::F => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'F' as u8]).map_err(Error::I2C),
+            TempUnit::C => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'C' as u8]).map_err(Error::I2C),
+            //_ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, ' ' as u8]).map_err(Error::I2C),
                 
-            };
+        };
 
-            Ok(())
+        Ok(())
 
-        }
-
-
-
-
-        // if temperature < -99 print '-LO-'                DONE!
-        // if temperature < 0 print '-25C' or '-10F'        DONE!
-        // if temperature > 99 print '-HI-'                 DONE!
-        // else print ' 25C'                                DONE!
-        // don't print leading zeros
-        
-   
-        
     }
 
 
