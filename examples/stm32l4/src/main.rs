@@ -11,7 +11,7 @@ use panic_halt as _;
 use stm32l4xx_hal::{
     delay::Delay,
     prelude::*,
-    serial::{Config, Serial},
+    //serial::{Config, Serial},
     i2c::I2c,
     };
 
@@ -51,11 +51,16 @@ fn main() -> ! {
     let mut display = TWIDisplay::new(i2c, 0x12);
 
     display.clear_display().unwrap();
+    
     //display.display_address().unwrap();
 
-    display.set_brightness(64).unwrap();
+    display.set_brightness(255).unwrap();
 
     let mut num: u8 = 0;
+
+    //display.display_digit(1,7).unwrap();
+
+    display.display_number(1234).unwrap();
 
     loop {
         
@@ -71,7 +76,7 @@ fn main() -> ! {
 
         //display.display_digit(3, num).unwrap();
 
-        display.display_temperature(0,TempUnit::C).unwrap();
+        //display.display_temperature(0,TempUnit::C).unwrap();
         //display.display_number(7707).unwrap();
 
         led.set_low().ok();

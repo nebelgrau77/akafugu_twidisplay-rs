@@ -43,7 +43,7 @@ not tested by me yet:
 - custom character
 - displaying a 16bit integer
 
-- time setting - doesn't seem to be working
+- time displaying - doesn't seem to be working
 
 FUNCTIONS:
 DONE - send digit
@@ -53,8 +53,11 @@ DONE - send digit
 DONE - display temperature (with a choice of C or F unit)
 
 
-*/
+ADD READ FUNCTION
+ADD DEFAULT ADDRESS AS A PUB CONST
 
+
+*/
 
 
 
@@ -107,16 +110,18 @@ impl BitFlags {
 const DEVICE_ADDRESS: u8 = 0x12; // this is the main I2C address, but there can be two other addresses, so this should be an ~~enum~~ number instead
 
 
-/// Two possible choices, used for various enable/disable bit flags
+/// Two possible choices for temperature units
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
 
-// THIS DOESN'T SEEM NECESSARY
 pub enum TempUnit {    
     /// Celsius degrees 
     C, 
     /// Fahrenheit degrees
     F,     
+
+    // could add H for humidity
+
 }
 
 
@@ -148,40 +153,61 @@ where
         self.i2c
     }
 
+
+    /// Write to the I2C bus
+    fn write(&mut self, payload: u8) -> Result<(), Error<E>> {
+        self.i2c.write(self.dev_addr, &[payload]).map_err(Error::I2C)
+    }
+
+   
+
     /// Clear the display
     pub fn clear_display(&mut self) -> Result<(), Error<E>> {
-        self.i2c.write(self.dev_addr, &[Register::CLEAR_DISPLAY]).map_err(Error::I2C)
+        self.write(Register::CLEAR_DISPLAY)
+        //self.i2c.write(self.dev_addr, &[Register::CLEAR_DISPLAY]).map_err(Error::I2C)
     }
 
     /// Display the current I2C address
     pub fn display_address(&mut self) -> Result<(), Error<E>> {
-        self.i2c.write(self.dev_addr, &[Register::DISPLAY_ADDRESS]).map_err(Error::I2C)
+        self.write(Register::DISPLAY_ADDRESS)
+        //self.i2c.write(self.dev_addr, &[Register::DISPLAY_ADDRESS]).map_err(Error::I2C)
     }
 
     /// Set brightness (0 - 255, 127 is 50%)
     pub fn set_brightness(&mut self, brightness: u8) -> Result<(), Error<E>> {
-        self.i2c.write(self.dev_addr, &[Register::BRIGHTNESS_SETTING, brightness]).map_err(Error::I2C)
+        //self.i2c.write(self.dev_addr, &[Register::BRIGHTNESS_SETTING, brightness]).map_err(Error::I2C)
+        self.write(Register::BRIGHTNESS_SETTING);
+        self.write(brightness)    
     }
 
     /// Write digit x at position y
     pub fn display_digit(&mut self, position: u8, digit: u8) -> Result<(), Error<E>> {
-        self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, position, digit]).map_err(Error::I2C)
+        //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, position, digit]).map_err(Error::I2C)
+        self.write(Register::POSITION_SETTING);
+        self.write(position);    
+        self.write(digit)    
+
     }
+
 
     /// Display a number using all four digits
     pub fn display_number(&mut self, number: u16) -> Result<(), Error<E>> {
         let digits = TWIDisplay::<I2C>::get_digits(number);
         
         (0..4).for_each(|i| {
-            self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING,
-                                                 i as u8, 
-                                                 digits[i as usize]])
-                                                 .map_err(Error::I2C);    
-        });     
-   
+            
+            self.display_digit(i as u8, digits[i as usize]);
+                                        
+        });
+
         Ok(())
+
+        
+
     }
-    
+
+
+
     /// Display temperature with a unit and a minus sign if necessary
     pub fn display_temperature(&mut self, temperature: i8, unit: TempUnit) -> Result<(), Error<E>> {
 
@@ -242,25 +268,5 @@ where
     }
 
 
-    // DO I REALLY NEED THESE FUNCTIONS? MAKES MORE SENSE TO GO DIRECTLY TO DOING STUFF...
-
-    /*
-
-    /// Write to a register.
-    fn write_register(&mut self, register: u8, data: u8) -> Result<(), Error<E>> {
-        let payload: [u8; 2] = [register, data]; 
-        self.i2c.write(DEVICE_ADDRESS, &payload).map_err(Error::I2C)
-    }
-
-    /// Read from a register. 
-    fn read_register(&mut self, register: u8) -> Result<u8, Error<E>> {
-        let mut data = [0];
-        self.i2c
-            .write_read(DEVICE_ADDRESS, &[register], &mut data)
-            .map_err(Error::I2C)
-            .and(Ok(data[0]))
-    }
-
-     */
 }
 
