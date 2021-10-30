@@ -52,36 +52,52 @@ fn main() -> ! {
 
     display.clear_display().unwrap();
     
+    //display.set_mode(Mode::Rotate).unwrap();
+    display.set_mode(Mode::Scroll).unwrap();
+
     //display.display_address().unwrap();
 
-    display.set_brightness(255).unwrap();
+    // display.set_brightness(255).unwrap();
 
-    let mut num: u8 = 0;
+    //let mut num: u8 = 0;
+
+
 
     //display.display_digit(1,7).unwrap();
 
-    display.display_number(1234).unwrap();
+    //display.display_number(1234).unwrap();
+
+    //display.send_digit(69).unwrap();
 
     loop {
         
         led.set_high().ok();
 
-        delay.delay_ms(50 as u32);    
 
+
+        delay.delay_ms(150 as u32);    
+
+        display.send_digit(10).unwrap();
+
+        /*
         if num >= 9 {
             num = 0;
         } else {
             num += 1;
         }
-
+         */
         //display.display_digit(3, num).unwrap();
 
         //display.display_temperature(0,TempUnit::C).unwrap();
         //display.display_number(7707).unwrap();
 
+
+
         led.set_low().ok();
 
-        delay.delay_ms(200 as u32);    
+        delay.delay_ms(100 as u32);    
+
+        
 
         }
     
