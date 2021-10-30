@@ -55,19 +55,33 @@ fn main() -> ! {
     //display.set_mode(Mode::Rotate).unwrap();
     display.set_mode(Mode::Scroll).unwrap();
 
-    //display.display_address().unwrap();
+    display.set_brightness(255).unwrap();
 
-    // display.set_brightness(255).unwrap();
+    display.display_address().unwrap();
+
+    delay.delay_ms(1000_u32);
+
+    display.set_brightness(63).unwrap();
 
     //let mut num: u8 = 0;
 
-
+    display.clear_display().unwrap();
 
     //display.display_digit(1,7).unwrap();
 
     //display.display_number(1234).unwrap();
 
     //display.send_digit(69).unwrap();
+
+    display.display_digit(1,7).unwrap();
+
+    display.send_digit(3).unwrap();
+
+    delay.delay_ms(1000_u32);
+
+    display.set_brightness(127).unwrap();
+
+    display.display_number(6543).unwrap();
 
     loop {
         
@@ -77,8 +91,8 @@ fn main() -> ! {
 
         delay.delay_ms(150 as u32);    
 
-        display.send_digit(10).unwrap();
-
+        //display.send_digit(7).unwrap();
+   
         /*
         if num >= 9 {
             num = 0;
