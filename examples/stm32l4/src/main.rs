@@ -10,15 +10,13 @@ use cortex_m_rt::entry;
 use panic_halt as _;
 use stm32l4xx_hal::{
     delay::Delay,
-    prelude::*,
-    //serial::{Config, Serial},
+    prelude::*,    
     i2c::I2c,
     };
 
 use akafugu_twidisplay::*;
 
 const BOOT_DELAY_MS: u16 = 100; 
-
 
 #[entry]
 fn main() -> ! {
@@ -56,85 +54,50 @@ fn main() -> ! {
     
     akafugu.clear_display().unwrap();
 
-    
-        
-    //akafugu.display_address().unwrap();
-/*
-    delay.delay_ms(1000_u32);
-     */
-    akafugu.set_brightness(127).unwrap();
-
-    //akafugu.set_mode(Mode::Scroll).unwrap();
-
-    //let mut temp: i16 = -120;
-
-
-
-    akafugu.display_data(77,'C', Some(-50), Some(199), -99, 999).unwrap();
-
-    /*
-
-    for ch in "HELLO ACAB CELL LACE OLEP".chars() {
-        akafugu.send_char(ch).unwrap();
-        delay.delay_ms(250_u32);    
-    };
-
-    */
-    
-    //akafugu.send_text("HELP").unwrap();
-
-    //delay.delay_ms(1000_u32);
-
-    
+ 
 
     loop {
         
+        // demo sequence
+
         led.set_high().ok();
 
-        delay.delay_ms(1000 as u32);    
+        akafugu.display_address();
+
+        delay.delay_ms(1000_u32);
         
-        /*
+        led.set_low().ok();
+
+        akafugu.display_temperature(-10,TempUnits::Celsius, Some(-50), Some(199)).unwrap();
+    
+        delay.delay_ms(1000_u32);
+
+        led.set_high().ok();
+
+        akafugu.set_brightness(80).unwrap();
+    
+        akafugu.display_time(10,35, true).unwrap();            
+
+        delay.delay_ms(1000_u32);
+
+        led.set_low().ok();
+    
+        akafugu.display_time(23,59, false).unwrap();
+    
+        delay.delay_ms(1000_u32);
+    
+        led.set_high().ok();
+
+        akafugu.display_humidity(55, None, None).unwrap();
+    
+        delay.delay_ms(1000_u32);
+        
         akafugu.clear_display().unwrap();
-
-        let firmware = akafugu.get_firmware_rev().unwrap();
-        //akafugu.display_digit(3, firmware).unwrap();
-        akafugu.send_digit(firmware).unwrap();
-
-        //akafugu.display_temperature(20, TempUnits::Celsius, Some(-30), Some(60)).unwrap();
 
         led.set_low().ok();
 
         delay.delay_ms(1000 as u32);    
-
-        akafugu.clear_display().unwrap();
-
-        //let number = akafugu.get_number_digits().unwrap();
-        //akafugu.display_digit(3, firmware).unwrap();
-        //akafugu.send_digit(number).unwrap();
-
-
-        //akafugu.display_humidity(5, Some(10), Some(90)).unwrap();
-
-        /*
-        akafugu.display_data(temp,'C', Some(-80), Some(110), -99, 199).unwrap();
-
         
-        if temp >= 300 {
-            temp = -150;
-        } else {
-            temp += 1;
-        }
-          */
-        
-
-    
-    */
-        
-    led.set_low().ok();
-
-    delay.delay_ms(1000 as u32);    
-        
-
         }
     
     

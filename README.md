@@ -10,10 +10,19 @@ based on the [`embedded-hal`] traits.
 
 
 This driver allows you to:
-- 
+- Display single digits or characters, also at a selected position
+- Display text, although some characters may not be available (see display documentation)
+- Clear the display
+- Show the current I2C address
+- Change the I2C address (experimental function)
+- Display time in HH.MM format
+- Display temperature or humidity, with settable lower/upper threshold
 
 ### TO DO:
-- [ ] test with other MCUs
+- [ ] test with other MCUs / Raspberry Pi
+- [ ] add a good example
+- [ ] read firmware version and number of digits (diagnostic functions)
+- [ ] display dots at selected positions
   
 
 ## The device
