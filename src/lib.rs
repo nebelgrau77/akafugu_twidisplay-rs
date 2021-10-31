@@ -204,7 +204,6 @@ USE '-' FOR DIGITS IF INCORRECT (DOES IT MAKE SENSE?)
 OTHER:
 - CUSTOM CHARACTERS
 
-
 */
 
 
@@ -237,11 +236,11 @@ impl Register {
     const MODE_SETTING          :u8 = 0x83;
     const CUSTOM_CHAR           :u8 = 0x84;
     const DOTS                  :u8 = 0x85;
-    const TIME_SETTING          :u8 = 0x87; // not sure if this works
-    const DISPLAY_WORD          :u8 = 0x88;
+    const DISPLAY_TIME          :u8 = 0x87; // not sure if this works
+    const _DISPLAY_WORD          :u8 = 0x88;
     const POSITION_SETTING      :u8 = 0x89;
-    const FIRMWARE_REV          :u8 = 0x8a;
-    const NUMBER_DIGITS         :u8 = 0x8b;
+    const _FIRMWARE_REV          :u8 = 0x8a;
+    const _NUMBER_DIGITS         :u8 = 0x8b;
     const DISPLAY_ADDRESS       :u8 = 0x90;
 }
 
@@ -534,12 +533,10 @@ where
             let decimals: u8 = ((data.abs() % 100) / 10) as u8; 
            
             // position 0 (hundreds or minus sign)
-            if data < 0 {
-                //self.write(&[Register::POSITION_SETTING, 0, '-' as u8])?
+            if data < 0 {                
                 self.display_char(0, '-')?
             } else if hundreds == 0 {
-                self.display_char(0, ' ')?
-                //self.write(&[Register::POSITION_SETTING, 0, ' ' as u8])?
+                self.display_char(0, ' ')?                
                 
             } else {
                 self.display_digit(0, hundreds)?                             
@@ -553,12 +550,10 @@ where
                 self.display_digit(1, decimals)?
             }
 
-            // position 2 
-            //self.write(&[Register::POSITION_SETTING, 2, (data.abs()  % 10) as u8])?;
+            // position 2             
             self.display_digit(2, (data.abs() % 10) as u8)?;
 
-            // position 3 (unit)
-            //self.write(&[Register::POSITION_SETTING, 3, unit as u8])?;
+            // position 3 (unit)            
             self.display_char(3, unit)?;
 
         }
@@ -638,6 +633,14 @@ where
 
     }
 
+    /*
+    THIS DOESN'T SEEM TO WORK
+    /// test the time display function
+    pub fn disp_time(&mut self, hours: u8, minutes: u8, seconds: u8 ) -> Result<(), Error<E>> {
+        self.write(&[Register::DISPLAY_TIME, hours, minutes, seconds])?;
+        Ok(())
+    }
+     */
 
     /// Get digits from a 4-digit number
     fn get_digits(number: u16) -> [u8;4] {

@@ -54,7 +54,7 @@ fn main() -> ! {
     
     akafugu.clear_display().unwrap();
 
- 
+    
 
     loop {
         

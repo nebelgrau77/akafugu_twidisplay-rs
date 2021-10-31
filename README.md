@@ -7,8 +7,6 @@ based on the [`embedded-hal`] traits.
 
 [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 
-
-
 This driver allows you to:
 - Display single digits or characters, also at a selected position
 - Display text, although some characters may not be available (see display documentation)
