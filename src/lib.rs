@@ -118,6 +118,7 @@
 //! The driver has three additional functions, that can be useful for clock or sensor applications.
 //! 
 //! #### Display time
+//! 
 //! Time is displayed in HH.MM format, with the central dot displayed or not:
 //! 
 //! ```rust
@@ -135,6 +136,40 @@
 //! 
 //! #### Display temperature
 //! 
+//! Displays integer temperature values with a unit of choice (Celsius/Fahrenheit), no leading zeros.
+//! The function allows setting lower and upper threshold: if the supplied value is below the lower threshold,
+//! the display will show `-LL-`, if above the upper threshold, it will show `-HH-`. 
+//! This can be useful for sensor applications such as weather stations: thresholds can be set to the limits of 
+//! reliable readings, e.g. -30 and +60 Celsius degrees, etc.
+//! Thresholds are optional and if not given, will default to the minimum and maximum limits, which are set to -99 and 999, respectively.
+//! If the supplied value exceeds the limit, the display will show `----`.  
+//! 
+//! ```rust
+//! let temp_reading = some_sensor_reading();
+//! // display temperature with unit 'C', lower threshold at -50 degrees, 
+//! // no upper threshold (defaults to +999)
+//! // temp_reading < -50 will show as `-LL-`, temp_reading < -99 will show as `----`
+//! akafugu.display_temperature(temperature, TempUnits::Celsius, Some(-50), None).unwrap();
+//! ```
+//! 
+//! #### Display humidity
+//! 
+//! Displays integer humidity values with a default unit 'H', no leading zeros.
+//! The function allows setting lower and upper threshold: if the supplied value is below the lower threshold,
+//! the display will show `-LL-`, if above the upper threshold, it will show `-HH-`. 
+//! This can be useful for sensor applications such as weather stations: thresholds can be set to the limits of 
+//! reliable readings, e.g. between 10 and 90% of relative humidity.
+//! Thresholds are optional and if not given, will default to the minimum and maximum limits, which are set to 0 and 100, respectively.
+//! If the supplied value exceeds the limit, the display will show `----`.  
+//! 
+//! ```rust
+//! let hum_reading = some_sensor_reading();
+//! // display humidity, lower threshold at 10%, upper threshold at 90%.
+//! // temp_reading < 10 will show as `-LL-`, temp_reading > 90 will show as `-HH-`,
+//! // readings below 0 or above 100 will show as `----`
+//! akafugu.display_humidity(humidity, Some(10), Some(90)).unwrap();
+//! ```
+
 
 
 // TO DO:
