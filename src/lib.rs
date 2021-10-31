@@ -53,9 +53,16 @@ DONE - send digit
 DONE - display temperature (with a choice of C or F unit)
 
 
-ADD READ FUNCTION
-ADD DEFAULT ADDRESS AS A PUB CONST
+TO DO:
 
+ADD READ FUNCTION 
+ADD READING FIRMWARE / VERSION
+ADD SETTING I2C ADDRESS
+DONE: ADD UNIVERSAL DATA DISPLAY FUNCTION
+MODIFY TEMPERATURE FUNCTION
+ADD HUMIDITY FUNCTION
+ADD STRING PRINTING
+USE '-' FOR DIGITS IF INCORRECT (DOES IT MAKE SENSE?)
 
 */
 
@@ -65,13 +72,9 @@ ADD DEFAULT ADDRESS AS A PUB CONST
 #![deny(missing_docs)]
 #![no_std]
 
-
-
-
 use embedded_hal as hal;
 
-
-use hal::blocking::i2c::{Write, WriteRead};
+use hal::blocking::i2c::{Write, WriteRead, Read};
 
 /// All possible errors in this crate
 #[derive(Debug)]
@@ -106,24 +109,24 @@ struct BitFlags;
 // THESE CAN BE USED FOR SETTING THE DOTS
 impl BitFlags {
     //const TEST1                 : u8 = 0b1000_0000;
-    
+    const DOT2                    : u8 = 0b0000_0100;
     }   
 
-const DEVICE_ADDRESS: u8 = 0x12; // this is the main I2C address, but there can be two other addresses, so this should be an ~~enum~~ number instead
+/// Default I2C address for the device
+pub const DEFAULT_ADDRESS: u8 = 0x12; 
 
-
-/// Two possible choices for temperature units
+/// Possible choices for temperature units
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
 
-pub enum TempUnit {    
+pub enum TempUnits {    
     /// Celsius degrees 
-    C, 
+    Celsius, 
     /// Fahrenheit degrees
-    F,     
-    // could add H for humidity
+    Fahrenheit,         
 }
-/// possible modes
+
+/// Two possible display modes
 pub enum Mode {
     /// Scroll
     Scroll,
@@ -132,12 +135,7 @@ pub enum Mode {
 }
 
 
-
-
-
-
-// THIS SHOULD CONTAIN THE ADDRESS AS WELL, LIKE IN THE LPS DRIVER
-/// TWIDisplay driver
+/// TWIDisplay driver, that holds the I2C bus instance and the I2C address used
 #[derive(Debug, Default)]
 pub struct TWIDisplay<I2C> {
     /// The concrete I2C device implementation.
@@ -145,15 +143,12 @@ pub struct TWIDisplay<I2C> {
     dev_addr: u8,
 }
 
-// mod control;
-
 
 impl <I2C, E> TWIDisplay<I2C>
 where 
     I2C: Write<Error = E> + WriteRead<Error = E>,
 {
-    /// Create a new instance of the TWIDisplay driver.
-    // NEEDS TO USE THE ADDRESS AS WELL
+    /// Create a new instance of the TWIDisplay driver.    
     pub fn new(i2c: I2C, dev_addr: u8) -> Self {
         TWIDisplay { i2c, dev_addr }
     }
@@ -163,58 +158,98 @@ where
         self.i2c
     }
 
+    /// Write data to the I2C bus
+    fn write(&mut self, payload: &[u8]) -> Result<(), Error<E>> {
+        self.i2c.write(self.dev_addr, payload).map_err(Error::I2C)    
+    }
+
+
     /*
-    /// Write to the I2C bus
-    fn write(&mut self, payload: u8) -> Result<(), Error<E>> {
-        self.i2c.write(self.dev_addr, &[payload]).map_err(Error::I2C)    
+
+    DOESN'T SEEM TO WORK - NEED TO TEST MORE
+
+    /// Read data from the I2C bus
+    fn read(&mut self, register: u8) -> Result<u8, Error<E>> {
+        let mut data = [0];
+        self.i2c
+        .write_read(self.dev_addr, &[register], &mut data)
+        .map_err(Error::I2C)
+        .and(Ok(data[0]))
     }
+
+    /// Read the firmware revision number (currently 1)
+    pub fn get_firmware_rev(&mut self) -> Result<u8, Error<E>> {
+        let data = self.read(Register::FIRMWARE_REV)?;
+        Ok(data)
+    }
+
+    /// Read the number of digits
+    pub fn get_number_digits(&mut self) -> Result<u8, Error<E>> {
+        let data = self.read(Register::NUMBER_DIGITS)?;
+        Ok(data)
+    }
+    
      */
-
-
-   /// Write to the I2C bus
-   fn write(&mut self, payload: &[u8]) -> Result<(), Error<E>> {
-    self.i2c.write(self.dev_addr, payload).map_err(Error::I2C)    
-    }
 
 
     /// Clear the display
     pub fn clear_display(&mut self) -> Result<(), Error<E>> {
         self.write(&[Register::CLEAR_DISPLAY])?;
         Ok(())
-        //self.i2c.write(self.dev_addr, &[Register::CLEAR_DISPLAY]).map_err(Error::I2C)
     }
 
-    /// Display the current I2C address
+    /*
+
+    // NEED TO TEST MORE: TRIED WITH VALUE 0x69, CORRECTLY DISPLAYED A105 ON POWER-UP
+    // BUT DID NOT RESPOND ON 0x69 I2C ADDRESS
+    // RESPONDED ONLY WITH ADDRESS 0
+
+    /// Set I2C address, defaults to 0x12
+    pub fn set_address(&mut self, address: u8) -> Result<(), Error<E>> {
+        //let mut dev_address = DEFAULT_ADDRESS;
+        match address {
+            a if a < 0x7f => self.write(&[Register::I2C_ADDRESS_SETTING, a])?,
+            _ => (),
+            }
+        Ok(())
+        }
+    
+     */
+
+
+    /// Show the current I2C address on the display
     pub fn display_address(&mut self) -> Result<(), Error<E>> {
         self.write(&[Register::DISPLAY_ADDRESS])?;
-        Ok(())
-        //self.i2c.write(self.dev_addr, &[Register::DISPLAY_ADDRESS]).map_err(Error::I2C)
+        Ok(())    
     }
-
     
-    /// Set brightness (0 - 255, 127 is 50%)
-    pub fn set_brightness(&mut self, brightness: u8) -> Result<(), Error<E>> {
-        //self.i2c.write(self.dev_addr, &[Register::BRIGHTNESS_SETTING, brightness]).map_err(Error::I2C)
-        //self.write(Register::BRIGHTNESS_SETTING);
-        //self.write(brightness)
+    /// Set dsiplay brightness (0 - 255, 127 is 50%)
+    pub fn set_brightness(&mut self, brightness: u8) -> Result<(), Error<E>> {        
         self.write(&[Register::BRIGHTNESS_SETTING, brightness])?;
-        Ok(())
-        
+        Ok(())        
     }
 
-    /// Write digit x at position y
+    /// Send a digit to the display without specifying the position
+    pub fn send_digit(&mut self, number: u8) -> Result<(), Error<E>> {        
+        if number > 9 {
+            return Err(Error::InvalidInputData)
+        } else {            
+            self.write(&[number])?
+        };
+        Ok(())
+    }
+
+    /// Write digit D at position P
     pub fn display_digit(&mut self, position: u8, digit: u8) -> Result<(), Error<E>> {
-        //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, position, digit]).map_err(Error::I2C)
-        //self.write(Register::POSITION_SETTING);
-        //self.write(position);
-        //self.write(digit)
         
-        if position < 1 || 
-           position > 4 ||
+
+        // TO DO: include hex digits:
+        // 0x00 - 0x0f: Displays a single digit 0-9 or hexadecimal digit A-F.
+
+        if position > 3 ||
            digit > 9 {
             return Err(Error::InvalidInputData);
-            } else {
-                //self.write(&[Register::POSITION_SETTING, position, digit]).map_err(Error::I2C)
+            } else {                
                 self.write(&[Register::POSITION_SETTING, position, digit])?
             };
         
@@ -222,8 +257,9 @@ where
 
     }
 
-    // ADD A BOOLEAN SWITCH "with_leading_zeros"
+   
     /// Display a number using all four digits
+    /// TO DO: ADD A BOOLEAN SWITCH "with_leading_zeros"
     pub fn display_number(&mut self, number: u16) -> Result<(), Error<E>> {
         
         if number > 9999 {
@@ -232,171 +268,236 @@ where
 
         let digits = TWIDisplay::<I2C>::get_digits(number);
         
-        for i in 0..4 {
+        for (idx, digit) in digits.iter().enumerate() {
+            self.display_digit(idx as u8, *digit)?
+        }       
 
-            self.display_digit(i as u8, digits[i as usize])?
-        }
-
-        /*
-        (0..4).for_each(|i| {
-            
-            self.display_digit(i as u8, digits[i as usize]).map_err(Error::I2C);
-            //self.display_digit(i as u8, digits[i as usize]).map_err(Error::I2C);
-                                        
-        });
-        */
-        
         Ok(())
 
     }
     
-    ///simply send a digit
-    pub fn send_digit(&mut self, number: u8) -> Result<(), Error<E>> {
+    
+    /// Send a character to the display without specifying the position
+    pub fn send_char(&mut self, ch: char) -> Result<(), Error<E>> {        
         
-        if number > 9 {
-            return Err(Error::InvalidInputData)
-        } else {
-            //self.i2c.write(self.dev_addr, &[number]).map_err(Error::I2C)
-            //self.write(&[number]).map_err(Error::I2C)
-            self.write(&[number])?
-        };
-
+        // TO DO: restrict to 0x0g - 0x79
+                
+        self.write(&[ch as u8])?;        
         Ok(())
-
-        
-
-        //self.write(&[number]).map_err(Error::I2C)
-        
-        
     }
  
+    
+    /// Write character C at position P
+    pub fn display_char(&mut self, position: u8, ch: char) -> Result<(), Error<E>> {        
+        
+        // TO DO: restrict to 0x0g - 0x79
+        
+        if position > 3 {
+            return Err(Error::InvalidInputData);            
+            } else {              
+                self.write(&[Register::POSITION_SETTING, position, ch as u8])?;
+           };        
+        Ok(())
+    }
 
-    /// set the mode
+    /// Send text to the display
+    pub fn send_text(&mut self, text: &str) -> Result<(), Error<E>> {
+        for ch in text.chars() {
+            self.send_char(ch)?
+        }
+        Ok(())
+    }
+
+    /// Display time in HH:MM format, with an optional dot between them
+    pub fn display_time(&mut self, hours: u8, minutes: u8, dot: bool) -> Result<(), Error<E>> {
+                
+        if hours > 23 || minutes > 59 {
+            return Err(Error::InvalidInputData)
+        } else {            
+            
+            let time_value = (hours as u16) * 100 + minutes as u16;
+            
+            self.display_number(time_value)?
+
+        };
+        
+        match dot {
+            true => self.write(&[Register::DOTS, BitFlags::DOT2])?, // dot at second position
+            false => self.write(&[Register::DOTS, 0b0000_0000])?,
+        }
+        
+        Ok(())
+
+    }
+
+
+    /// Set the display mode: Scroll or Rotate (see documentation)
     pub fn set_mode(&mut self, mode: Mode) -> Result<(), Error<E>> {
         
         match mode {
             Mode::Rotate => self.write(&[Register::MODE_SETTING, 0])?,
             Mode::Scroll => self.write(&[Register::MODE_SETTING, 1])?,
-        }
-        
+        }        
         Ok(())
     }
 
-    // ADD A GENERIC display_value_with_unit_threshold(value, unit, lo, hi) FUNCTION
-    // this can be used for temperature and humidity, and the simple version without threshold setting will just take lo = -99, hi = 99
-    // function must check if lo < hi, otherwise defaults to -99,99
-    // also if lo < -99 then lo = 99, if hi > 99 then hi = 99
+    /// Display data with units (temperature, humidity) and defined thresholds
+    pub fn display_data(&mut self, 
+                    data: i16, unit: char, 
+                    lo_thresh: Option<i16>, hi_thresh: Option<i16>, 
+                    min_val: i16, max_val: i16) -> Result<(), Error<E>> {
 
+        // check if limits can be accepted, if not reset to -99/999                            
+        if min_val < (-99) || max_val > 999 {
+            let (min_val, max_val): (i16,i16) = (-99, 999);
+        }
 
-    // CHANGE IT TO -99 / 999 AS DEFAULT
-    //
-    
-    /*
-        fn temp(t: i8, lo: Option<i8>, hi: Option<i8>) -> () {
+        // thresholds initialized as min/max limits
+        let mut lo_th: i16 = min_val; 
+        let mut hi_th: i16 = max_val;
+
+        match lo_thresh {
+            Some(val) => lo_th = val, // if lower threshold was given
+            None => lo_th = min_val,
+        }
+
+        match hi_thresh {
+            Some(val) => hi_th = val, // if upper threshold was given
+            None => lo_th = max_val,
+        }
+
+        // display -LL- and -HH- for data exceding thresholds, 
+        // e.g. -20 and +50 for a temperature sensor
         
-            let mut lo_th = -99;
-            let mut hi_th = 99;
-            
-            if let Some(l) = lo {
-                lo_th = l
-            }
-            
-            if let Some(h) = hi {
-                hi_th = h
-            }
-
-            if lo_th < - 99 {
-                lo_th = -99
-            }
-            
-            if hi_th > 99 {
-                hi_th = 99
-            }
-
-
-            if lo_th > hi_th {
-                println!("temp: {}C, lo: {}, hi: {}", t, -99, 99)
-            } else {
-                println!("temp: {}C, lo: {}, hi: {}", t, lo_th, hi_th)
-            }
-            
-        }
-
-
-        fn temp_thresh(t: i8, lo: i8, hi: i8) -> () {
-            temp(t, Some(lo), Some(hi))
-        }
-    
-    
-    */
-
-    // NEED TO FIGURE OUT HOW TO SKIP LEADING ZEROS ALSO FOR 3-DIGIT NUMBERS
-
-    // USE i16 INSTEAD OF i8
-
-    /// Display temperature with a unit and a minus sign if necessary
-    pub fn display_temperature(&mut self, temperature: i8, unit: TempUnit) -> Result<(), Error<E>> {
-
-        if temperature < (-99) {
-            for (pos,ch) in "-LO-".chars().enumerate() {
-                //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, pos as u8, ch as u8]).map_err(Error::I2C);
-                self.write(&[Register::POSITION_SETTING, pos as u8, ch as u8])?;
+        if data < min_val || data > max_val {
+            for (pos,ch) in "----".chars().enumerate() {
+                self.display_char(pos as u8, ch)?
+                
             }    
-            //Ok(())
-        } else if temperature > 99 {
-            for (pos,ch) in "-HI-".chars().enumerate() {
-                //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, pos as u8, ch as u8]).map_err(Error::I2C);
-                self.write(&[Register::POSITION_SETTING, pos as u8, ch as u8])?;
+        } else if data < lo_th {
+            for (pos,ch) in "-LL-".chars().enumerate() {
+                self.display_char(pos as u8, ch)?
+                
             }    
-            //Ok(())
+            
+        } else if data > hi_th {
+            for (pos,ch) in "-HH-".chars().enumerate() {                
+                self.display_char(pos as u8, ch)?
+                
+            }    
+            
         } else {
         
-        // detect minus temperatures
-        match temperature {
-            //t if t < 0 => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, '-' as u8]).map_err(Error::I2C),
-            //_ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 0, ' ' as u8]).map_err(Error::I2C),
-            t if t < 0 => self.write(&[Register::POSITION_SETTING, 0, '-' as u8])?,
-            _ => self.write(&[Register::POSITION_SETTING, 0, ' ' as u8])?,
-        };
-
-        
-        // add another match for hundreds, but only for positive numbers!
-        // maybe the minus detection should happen here and if minus, then do just decimals matching, meanwhile for positive values also match hundreds
-
-        // let hundreds: u8 = (temperature.abs() / 100) as u8;
-
-
-        let decimals: u8 = (temperature.abs() / 10) as u8; 
-
-        match decimals {
-            //0 => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, ' ' as u8]).map_err(Error::I2C),
-            //_ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, decimals]).map_err(Error::I2C),
-            0 => self.write(&[Register::POSITION_SETTING, 1, ' ' as u8])?,
-            _ => self.write(&[Register::POSITION_SETTING, 1, decimals])?,
+            let hundreds: u8 = (data.abs() / 100) as u8;
+            let decimals: u8 = ((data.abs() % 100) / 10) as u8; 
+           
+            // position 0 (hundreds or minus sign)
+            if data < 0 {
+                //self.write(&[Register::POSITION_SETTING, 0, '-' as u8])?
+                self.display_char(0, '-')?
+            } else if hundreds == 0 {
+                self.display_char(0, ' ')?
+                //self.write(&[Register::POSITION_SETTING, 0, ' ' as u8])?
+                
+            } else {
+                self.display_digit(0, hundreds)?                             
             }
-            //Ok(())
-        };
 
-        //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 1, (temperature.abs() / 10) as u8]).map_err(Error::I2C);
-        //self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 2, (temperature.abs()  % 10) as u8]).map_err(Error::I2C);
-        self.write(&[Register::POSITION_SETTING, 2, (temperature.abs()  % 10) as u8])?;
+            // position 1 (decimals)
+            if (hundreds == 0 || data < 0) && decimals == 0 {
+                self.display_char(1, ' ')?
+                //self.write(&[Register::POSITION_SETTING, 1, ' ' as u8])?
+            } else {              
+                self.display_digit(1, decimals)?
+            }
+
+            // position 2 
+            //self.write(&[Register::POSITION_SETTING, 2, (data.abs()  % 10) as u8])?;
+            self.display_digit(2, (data.abs() % 10) as u8)?;
+
+            // position 3 (unit)
+            //self.write(&[Register::POSITION_SETTING, 3, unit as u8])?;
+            self.display_char(3, unit)?;
+
+        }
+
+        Ok(())
+
+    }
+
+    /// Display temperature between -99 and 999 with a chosen unit, with lower and upper threshold
+    
+    pub fn display_temperature(&mut self, temperature: i16, unit: TempUnits, lo_thresh: Option<i16>, hi_thresh: Option<i16>) -> Result<(), Error<E>> {
         
+        let mut temp_unit = 'C';       
+        let (min_val, max_val): (i16,i16) = (-99, 999);
+
+        let mut lo_th: i16 = min_val;
+        let mut hi_th: i16 = max_val;
 
         match unit {
-            //TempUnit::F => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'F' as u8]).map_err(Error::I2C),
-            //TempUnit::C => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, 'C' as u8]).map_err(Error::I2C),
-            TempUnit::F => self.write(&[Register::POSITION_SETTING, 3, 'F' as u8])?,
-            TempUnit::C => self.write(&[Register::POSITION_SETTING, 3, 'C' as u8])?,
-            //_ => self.i2c.write(self.dev_addr, &[Register::POSITION_SETTING, 3, ' ' as u8]).map_err(Error::I2C),
+            TempUnits::Celsius => temp_unit = 'C',
+            TempUnits::Fahrenheit => temp_unit = 'F',
+        }
+        
+        match lo_thresh {
+            Some(th) => lo_th = th,
+            None => lo_th = min_val,
+        }
+
+        if lo_th < min_val {
+            lo_th = min_val
+        }
+
+        match hi_thresh {
+            Some(th) => hi_th = th,
+            None => hi_th = max_val,
+        }
+
+        if hi_th > max_val {
+            hi_th = max_val
+        }
+
+        self.display_data(temperature, temp_unit, Some(lo_th), Some(hi_th), min_val, max_val)?;
+
+        Ok(())
+
+    }
+
+    /// Display humidity in range 0-100, with lower and upper threshold. 
+
+    pub fn display_humidity(&mut self, humidity: i16, lo_thresh: Option<i16>, hi_thresh: Option<i16>) -> Result<(), Error<E>> {
                 
-        };
+        let (min_val, max_val): (i16,i16) = (0, 100);
+
+        let mut lo_th: i16 = min_val;
+        let mut hi_th: i16 = max_val;
+        
+        match lo_thresh {
+            Some(th) => lo_th = th,
+            None => lo_th = min_val,
+        }
+
+        if lo_th < min_val {
+            lo_th = min_val
+        }
+
+        match hi_thresh {
+            Some(th) => hi_th = th,
+            None => hi_th = max_val,
+        }
+
+        if hi_th > max_val {
+            hi_th = max_val
+        }
+        self.display_data(humidity, 'H', Some(lo_th), Some(hi_th), min_val, max_val)?;
 
         Ok(())
 
     }
 
 
-    /// Get digits from a number
+    /// Get digits from a 4-digit number
     fn get_digits(number: u16) -> [u8;4] {
         let mut data = number;
         let mut digits = [0u8;4];
