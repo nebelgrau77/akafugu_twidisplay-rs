@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/nebelgrau77/pcf8563-rs"
 repository = "https://github.com/nebelgrau77/pcf8563-rs"
 license = "MIT OR Apache-2.0"
-keywords = ["akafugu", "twidisplay", "display", "lcd", "driver", "embedded-hal-driver"]
+keywords = ["akafugu", "twidisplay", "lcd", "driver", "embedded-hal-driver"]
 categories = ["embedded", "hardware-support", "no-std"]
 
 include = [
