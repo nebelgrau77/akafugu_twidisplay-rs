@@ -520,15 +520,13 @@ where
         let mut lo_th: i16 = min_val; 
         let mut hi_th: i16 = max_val;
 
-        match lo_thresh {
-            Some(val) => lo_th = val, // if lower threshold was given
-            None => lo_th = min_val,
-        }
+        if let Some(val) = lo_thresh {
+            lo_th = val
+        } 
 
-        match hi_thresh {
-            Some(val) => hi_th = val, // if upper threshold was given
-            None => lo_th = max_val,
-        }
+        if let Some(val) = hi_thresh {
+            hi_th = val
+        } 
 
         // display -LL- and -HH- for data exceding thresholds, 
         // e.g. -20 and +50 for a temperature sensor
