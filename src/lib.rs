@@ -240,7 +240,7 @@ impl Register {
     const I2C_ADDRESS_SETTING   :u8 = 0x81;
     const CLEAR_DISPLAY         :u8 = 0x82;
     const MODE_SETTING          :u8 = 0x83;
-    const CUSTOM_CHAR           :u8 = 0x84;
+    const _CUSTOM_CHAR           :u8 = 0x84; // not implemented yet
     const DOTS                  :u8 = 0x85;
     //const _DISPLAY_TIME          :u8 = 0x87; // not sure if this works
     //const _DISPLAY_WORD          :u8 = 0x88;
@@ -583,12 +583,10 @@ where
     
     pub fn display_temperature(&mut self, temperature: i16, unit: TempUnits, lo_thresh: Option<i16>, hi_thresh: Option<i16>) -> Result<(), Error<E>> {
         
-        let mut temp_unit = 'C';       
-        
-        match unit {
-            TempUnits::Celsius => temp_unit = 'C',
-            TempUnits::Fahrenheit => temp_unit = 'F',
-        }
+        let temp_unit = match unit {
+            TempUnits::Celsius => 'C',
+            TempUnits::Fahrenheit => 'F',
+        };                         
         
         self.display_data(temperature, temp_unit, lo_thresh, hi_thresh, -99, 999)?;
 
