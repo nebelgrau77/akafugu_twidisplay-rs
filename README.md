@@ -42,6 +42,37 @@ Please find additional examples using hardware in this repository: [examples]
 #![no_main]
 #![no_std]
 
+use akafugu_twidisplay::*:
+
+
+
+#[entry]
+fn main() -> ! {
+
+  // initialize all the necessary peripherals
+  // create an instance of I2C bus
+
+  let mut akafugu = TWIDisplay::new(i2c, DEFAULT_ADDRESS);
+  
+  akafugu.clear_display().unwrap();
+  akafugu.set_brightness(127).unwrap();
+
+  loop {
+
+    let (hours, minutes, seconds) = some_rtc_reading();
+
+    // display time in HH.MM format, dot is on when number of seconds is even
+
+    if seconds % 2 == 0 {
+      akafugu.display_time(hours, minutes, true).unwrap();
+    } else {
+      akafugu.display_time(hours, minutes, false).unwrap();
+    }
+
+  }
+
+}
+
 ```
 
 ## Support

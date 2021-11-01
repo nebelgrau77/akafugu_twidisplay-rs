@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ...
 
+## [0.0.9] - 2021-11-01
+
+### Added 
+- Use example in the readme.md file
+
+### Changed
+- Repository status to public
+
 
 ## [0.0.5] - 2021-10-31
 
@@ -20,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Displaying temperature with a chosen unit, no leading zeros, minus sign, lower and upper threshold, LL/HH if below/over threshold, ---- if exceeding -99/999
 - Displaying humidity between 0 and 100 with settable lower/upper threshold
 - Displaying time in HH.MM format with an optional dot
+
+[0.0.5]: https://github.com/nebelgrau77/akafugu_twidisplay-rs/releases/tag/v0.0.5
 
 ## [0.0.1] - 2021-10-17
 
