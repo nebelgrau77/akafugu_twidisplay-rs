@@ -503,22 +503,21 @@ where
                     lo_thresh: Option<i16>, hi_thresh: Option<i16>, 
                     min_val: i16, max_val: i16) -> Result<(), Error<E>> {
 
-        let mut min_val = min_val;
-        let mut max_val = max_val;
+        let mut min_limit = -99;
+        let mut max_limit = 999;
 
         // check if limits can be accepted, if not reset to -99/999                                    
-        if min_val < (-99) {
-            min_val = -99
+        if min_val > (-100) {
+            min_limit = min_val
         }
 
-        if max_val > 999 {
-            max_val = 999
-        }
-           
+        if max_val < 1000 {
+            max_limit = max_val
+        }           
 
         // thresholds initialized as min/max limits
-        let mut lo_th: i16 = min_val; 
-        let mut hi_th: i16 = max_val;
+        let mut lo_th: i16 = min_limit; 
+        let mut hi_th: i16 = max_limit;
 
         if let Some(val) = lo_thresh {
             lo_th = val
@@ -533,9 +532,8 @@ where
         
         if data < min_val || data > max_val {
             for (pos,ch) in "----".chars().enumerate() {
-                self.display_char(pos as u8, ch)?
-                
-            }    
+                self.display_char(pos as u8, ch)?                
+            }                
         } else if data < lo_th {
             for (pos,ch) in "-LL-".chars().enumerate() {
                 self.display_char(pos as u8, ch)?
@@ -544,12 +542,10 @@ where
             
         } else if data > hi_th {
             for (pos,ch) in "-HH-".chars().enumerate() {                
-                self.display_char(pos as u8, ch)?
-                
+                self.display_char(pos as u8, ch)?                
             }    
             
-        } else {
-        
+        } else {        
             let hundreds: u8 = (data.abs() / 100) as u8;
             let decimals: u8 = ((data.abs() % 100) / 10) as u8; 
            
@@ -588,35 +584,13 @@ where
     pub fn display_temperature(&mut self, temperature: i16, unit: TempUnits, lo_thresh: Option<i16>, hi_thresh: Option<i16>) -> Result<(), Error<E>> {
         
         let mut temp_unit = 'C';       
-        let (min_val, max_val): (i16,i16) = (-99, 999);
-
-        let mut lo_th: i16 = min_val;
-        let mut hi_th: i16 = max_val;
-
+        
         match unit {
             TempUnits::Celsius => temp_unit = 'C',
             TempUnits::Fahrenheit => temp_unit = 'F',
         }
         
-        match lo_thresh {
-            Some(th) => lo_th = th,
-            None => lo_th = min_val,
-        }
-
-        if lo_th < min_val {
-            lo_th = min_val
-        }
-
-        match hi_thresh {
-            Some(th) => hi_th = th,
-            None => hi_th = max_val,
-        }
-
-        if hi_th > max_val {
-            hi_th = max_val
-        }
-
-        self.display_data(temperature, temp_unit, Some(lo_th), Some(hi_th), min_val, max_val)?;
+        self.display_data(temperature, temp_unit, lo_thresh, hi_thresh, -99, 999)?;
 
         Ok(())
 
@@ -624,46 +598,15 @@ where
 
     /// Display humidity in range 0-100, with lower and upper threshold. 
 
-    pub fn display_humidity(&mut self, humidity: i16, lo_thresh: Option<i16>, hi_thresh: Option<i16>) -> Result<(), Error<E>> {
-                
-        let (min_val, max_val): (i16,i16) = (0, 100);
-
-        let mut lo_th: i16 = min_val;
-        let mut hi_th: i16 = max_val;
-        
-        match lo_thresh {
-            Some(th) => lo_th = th,
-            None => lo_th = min_val,
-        }
-
-        if lo_th < min_val {
-            lo_th = min_val
-        }
-
-        match hi_thresh {
-            Some(th) => hi_th = th,
-            None => hi_th = max_val,
-        }
-
-        if hi_th > max_val {
-            hi_th = max_val
-        }
-        self.display_data(humidity, 'H', Some(lo_th), Some(hi_th), min_val, max_val)?;
+    pub fn display_humidity(&mut self, humidity: i16, lo_thresh: Option<i16>, hi_thresh: Option<i16>) -> Result<(), Error<E>> {              
+  
+        self.display_data(humidity, 'H', lo_thresh, hi_thresh, 0, 100)?;
 
         Ok(())
 
     }
 
-    /*
-    THIS DOESN'T SEEM TO WORK
-    /// test the time display function
-    pub fn disp_time(&mut self, hours: u8, minutes: u8, seconds: u8 ) -> Result<(), Error<E>> {
-        self.write(&[Register::DISPLAY_TIME, hours, minutes, seconds])?;
-        Ok(())
-    }
-     */
-
-    /// Get digits from a 4-digit number
+    /// Helper function to get digits from a 4-digit number
     fn get_digits(number: u16) -> [u8;4] {
         let mut data = number;
         let mut digits = [0u8;4];

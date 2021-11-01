@@ -56,6 +56,7 @@ fn main() -> ! {
 
     
 
+
     loop {
         
         // demo sequence
@@ -63,7 +64,7 @@ fn main() -> ! {
         led.set_high().ok();
 
         // show the current I2C address
-        akafugu.display_address(); 
+        akafugu.display_address().unwrap(); 
 
         delay.delay_ms(1000_u32);       
 
