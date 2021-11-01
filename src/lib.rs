@@ -235,29 +235,20 @@ pub enum Error<E> {
 struct Register;
 
 // THESE WILL BE USED FOR VARIOUS OPERATIONS, E.G. SETTING POSITION
-impl Register {
-    // const CTRL_STATUS_1     : u8 = 0x00;
+impl Register {    
     const BRIGHTNESS_SETTING    :u8 = 0x80;
     const I2C_ADDRESS_SETTING   :u8 = 0x81;
     const CLEAR_DISPLAY         :u8 = 0x82;
     const MODE_SETTING          :u8 = 0x83;
     const CUSTOM_CHAR           :u8 = 0x84;
     const DOTS                  :u8 = 0x85;
-    const DISPLAY_TIME          :u8 = 0x87; // not sure if this works
-    const _DISPLAY_WORD          :u8 = 0x88;
+    //const _DISPLAY_TIME          :u8 = 0x87; // not sure if this works
+    //const _DISPLAY_WORD          :u8 = 0x88;
     const POSITION_SETTING      :u8 = 0x89;
     const _FIRMWARE_REV          :u8 = 0x8a;
     const _NUMBER_DIGITS         :u8 = 0x8b;
     const DISPLAY_ADDRESS       :u8 = 0x90;
 }
-
-struct BitFlags;
-
-// THESE CAN BE USED FOR SETTING THE DOTS
-impl BitFlags {
-    //const TEST1                 : u8 = 0b1000_0000;
-    const DOT2                    : u8 = 0b0000_0100;
-    }   
 
 /// Default I2C address for the device
 pub const DEFAULT_ADDRESS: u8 = 0x12; 
@@ -265,7 +256,6 @@ pub const DEFAULT_ADDRESS: u8 = 0x12;
 /// Possible choices for temperature units
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
-
 pub enum TempUnits {    
     /// Celsius degrees 
     Celsius, 
@@ -273,6 +263,8 @@ pub enum TempUnits {
     Fahrenheit,         
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug)]
 /// Two possible display modes
 pub enum Mode {
     /// Scroll
@@ -280,7 +272,6 @@ pub enum Mode {
     /// Rotate
     Rotate,
 }
-
 
 /// TWIDisplay driver, that holds the I2C bus instance and the I2C address used
 #[derive(Debug, Default)]
@@ -309,7 +300,6 @@ where
     fn write(&mut self, payload: &[u8]) -> Result<(), Error<E>> {
         self.i2c.write(self.dev_addr, payload).map_err(Error::I2C)    
     }
-
 
     /*
 
@@ -344,7 +334,6 @@ where
         self.write(&[Register::CLEAR_DISPLAY])?;
         Ok(())
     }
-
     
 
     // NEED TO TEST MORE: TRIED WITH VALUE 0x69, CORRECTLY DISPLAYED A105 ON POWER-UP
@@ -376,8 +365,6 @@ where
         self.write(&[Register::BRIGHTNESS_SETTING, brightness])?;
         Ok(())        
     }
-
-  
 
     /// Display the dots, with boolean switches (true is on, false is off)
         
@@ -412,7 +399,6 @@ where
 
     /// Write digit D at position P
     pub fn display_digit(&mut self, position: u8, digit: u8) -> Result<(), Error<E>> {
-        
 
         // TO DO: include hex digits:
         // 0x00 - 0x0f: Displays a single digit 0-9 or hexadecimal digit A-F.
@@ -427,10 +413,9 @@ where
         Ok(())
 
     }
-
    
     /// Display a number using all four digits
-    /// TO DO: ADD A BOOLEAN SWITCH "with_leading_zeros"
+    // TO DO: ADD A BOOLEAN SWITCH "with_leading_zeros"
     pub fn display_number(&mut self, number: u16) -> Result<(), Error<E>> {
         
         if number > 9999 {
@@ -518,10 +503,18 @@ where
                     lo_thresh: Option<i16>, hi_thresh: Option<i16>, 
                     min_val: i16, max_val: i16) -> Result<(), Error<E>> {
 
-        // check if limits can be accepted, if not reset to -99/999                            
-        if min_val < (-99) || max_val > 999 {
-            let (min_val, max_val): (i16,i16) = (-99, 999);
+        let mut min_val = min_val;
+        let mut max_val = max_val;
+
+        // check if limits can be accepted, if not reset to -99/999                                    
+        if min_val < (-99) {
+            min_val = -99
         }
+
+        if max_val > 999 {
+            max_val = 999
+        }
+           
 
         // thresholds initialized as min/max limits
         let mut lo_th: i16 = min_val; 
