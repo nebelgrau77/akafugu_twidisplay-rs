@@ -58,6 +58,9 @@ fn main() -> ! {
         
         // demo sequence
 
+        // maximum brightness
+        akafugu.set_brightness(255).unwrap();
+
         led.set_high().ok();
 
         // show the current I2C address
@@ -73,36 +76,39 @@ fn main() -> ! {
         delay.delay_ms(1000_u32);
 
         led.set_high().ok();
-
-        // change the brightness
-        akafugu.set_brightness(80).unwrap();
-    
+        
         // display time with the dot on
-        akafugu.display_time(10,35, true).unwrap();            
+        akafugu.display_time(9,7, true).unwrap();            
 
         delay.delay_ms(1000_u32);
 
         led.set_low().ok();
     
+        // minimmum brightness
+        akafugu.set_brightness(0).unwrap();
+
         // display time with the dot off
-        akafugu.display_time(23,59, false).unwrap();
+        akafugu.display_time(17,0, false).unwrap();
     
         delay.delay_ms(1000_u32);
     
         led.set_high().ok();
 
         // display humidity, no thresholds
-        akafugu.display_humidity(55, None, None).unwrap();
+        akafugu.display_humidity(65, None, None).unwrap();
     
         delay.delay_ms(1000_u32);
         
         akafugu.clear_display().unwrap();
-         
+        
+        // 50% brightness
+        akafugu.set_brightness(127).unwrap();
+    
         led.set_low().ok();
 
         // display temperature in Fahrenheits; as the lower threshold is set to 0, 
         // it will show as -LL-
-        akafugu.display_temperature(-20, TempUnits::Fahrenheit, Some(0), None).unwrap();
+        akafugu.display_temperature(-25, TempUnits::Fahrenheit, Some(0), None).unwrap();
         
         delay.delay_ms(1000 as u32);    
 
@@ -110,12 +116,28 @@ fn main() -> ! {
 
         // display temperature that is below the display limits (-99),
         // it will show as '----'
-        akafugu.display_temperature(-120, TempUnits::Fahrenheit, None, None).unwrap();
+        akafugu.display_temperature(-110, TempUnits::Fahrenheit, None, None).unwrap();
         
         delay.delay_ms(1000 as u32);    
 
         led.set_low().ok();
 
+        // turn first and third dot on; previous '----' stays on
+        akafugu.display_dots([true, false, true, false]).unwrap();
+
+        delay.delay_ms(1000 as u32);    
+
+        led.set_high().ok();
+
+        // clean up the display
+        akafugu.clear_display().unwrap();
+
+        // turn second and fourth dot on        
+        akafugu.display_dots([false, true, false, true]).unwrap();
+
+        delay.delay_ms(1000 as u32);    
+
+        led.set_high().ok();
 
         }
     
