@@ -54,9 +54,6 @@ fn main() -> ! {
     
     akafugu.clear_display().unwrap();
 
-    
-
-
     loop {
         
         // demo sequence
