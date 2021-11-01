@@ -83,6 +83,13 @@
 //! ```
 //! _NOTE_: Numbers will be displayed with leading zeroes, e.g. `0023`. 
 //! 
+//! Dots can be turned on or off using this function:
+//! ```rust
+//! // this will turn on the first and the third dot from the left
+//! akafugu.display_dots([true, false, true, false]).unwrap();
+//! ```
+//! 
+//! 
 //! ### Control functions
 //! 
 //! Display mode can be changed as follows:
@@ -370,6 +377,29 @@ where
         Ok(())        
     }
 
+  
+
+    /// Display the dots, with boolean switches (true is on, false is off)
+        
+    // dots are numbered 1,2,3,4 from the left, and they correspond to bits
+    // so 0b0000_0010 is bit 1, dot 1, 0b0000_1000 is bit 3, dot 3 and so on
+    
+    pub fn display_dots(&mut self, dots: [bool; 4]) -> Result<(), Error<E>> {
+        
+        let mut dotvalues: u8 = 0;
+        
+        for (idx, dot) in dots.iter().enumerate() {
+            match dot {
+                true => dotvalues += 2_u8.pow(idx as u32 + 1_u32),
+                false => ()
+            }
+        };
+
+        self.write(&[Register::DOTS, dotvalues])?;
+        Ok(())
+    }
+
+
     /// Send a digit to the display without specifying the position
     pub fn send_digit(&mut self, number: u8) -> Result<(), Error<E>> {        
         if number > 9 {
@@ -462,9 +492,9 @@ where
 
         };
         
-        match dot {
-            true => self.write(&[Register::DOTS, BitFlags::DOT2])?, // dot at second position
-            false => self.write(&[Register::DOTS, 0b0000_0000])?,
+        match dot {            
+            true => self.display_dots([false, true, false, false])?, // dot at second position
+            false => self.display_dots([false, false, false, false])?,
         }
         
         Ok(())

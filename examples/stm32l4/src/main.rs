@@ -62,42 +62,63 @@ fn main() -> ! {
 
         led.set_high().ok();
 
-        akafugu.display_address();
+        // show the current I2C address
+        akafugu.display_address(); 
 
-        delay.delay_ms(1000_u32);
-        
+        delay.delay_ms(1000_u32);       
+
         led.set_low().ok();
 
-        akafugu.display_temperature(-10,TempUnits::Celsius, Some(-50), Some(199)).unwrap();
+        // display temperature with Celsius units, and set lower and upper thresholds
+        akafugu.display_temperature(-10,TempUnits::Celsius, Some(-50), Some(199)).unwrap(); 
     
         delay.delay_ms(1000_u32);
 
         led.set_high().ok();
 
+        // change the brightness
         akafugu.set_brightness(80).unwrap();
     
+        // display time with the dot on
         akafugu.display_time(10,35, true).unwrap();            
 
         delay.delay_ms(1000_u32);
 
         led.set_low().ok();
     
+        // display time with the dot off
         akafugu.display_time(23,59, false).unwrap();
     
         delay.delay_ms(1000_u32);
     
         led.set_high().ok();
 
+        // display humidity, no thresholds
         akafugu.display_humidity(55, None, None).unwrap();
     
         delay.delay_ms(1000_u32);
         
         akafugu.clear_display().unwrap();
+         
+        led.set_low().ok();
+
+        // display temperature in Fahrenheits; as the lower threshold is set to 0, 
+        // it will show as -LL-
+        akafugu.display_temperature(-20, TempUnits::Fahrenheit, Some(0), None).unwrap();
+        
+        delay.delay_ms(1000 as u32);    
+
+        led.set_high().ok();
+
+        // display temperature that is below the display limits (-99),
+        // it will show as '----'
+        akafugu.display_temperature(-120, TempUnits::Fahrenheit, None, None).unwrap();
+        
+        delay.delay_ms(1000 as u32);    
 
         led.set_low().ok();
 
-        delay.delay_ms(1000 as u32);    
-        
+
         }
     
     
