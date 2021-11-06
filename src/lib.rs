@@ -360,7 +360,7 @@ where
         Ok(())    
     }
     
-    /// Set dsiplay brightness (0 - 255, 127 is 50%)
+    /// Set display brightness (0 - 255, 127 is 50%)
     pub fn set_brightness(&mut self, brightness: u8) -> Result<(), Error<E>> {        
         self.write(&[Register::BRIGHTNESS_SETTING, brightness])?;
         Ok(())        
