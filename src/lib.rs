@@ -141,6 +141,22 @@
 //! }
 //! ```
 //! 
+//! #### Display date
+//!  
+//! 
+//! Date can be displayed either in MMDD or DDMM format, with the central dot on or off.
+//! 
+//! ```rust
+//! 
+//! // get date from the clock 
+//! let (month, day) = some_rtc_function();
+//! 
+//! // display date in MMDD format with the central dot on
+//! akafugu.display_date(month, day, DateFormat::MMDD, true).unwrap()
+//! 
+//! ```
+//! 
+//! 
 //! #### Display temperature
 //! 
 //! Displays integer temperature values with a unit of choice (Celsius/Fahrenheit), no leading zeros.
@@ -262,6 +278,17 @@ pub enum TempUnits {
     /// Fahrenheit degrees
     Fahrenheit,         
 }
+
+/// Possible choices for date format
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug)]
+pub enum DateFormat {    
+    /// Month Day
+    MMDD, 
+    /// Day Month (American style)
+    DDMM,         
+}
+
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
@@ -486,6 +513,41 @@ where
 
     }
 
+    // TO DO: add display_date(month, day, format) function
+    // format can be MMDD or DDMM
+    // no leading zeros?
+    // middle dot ON
+    // check if month <1,12> and day <1,31>
+    /// Display date in a selected format, with or without the central dot
+    pub fn display_date(&mut self, month: u8, day: u8, format: DateFormat, dot: bool) -> Result<(), Error<E>> {
+        
+        if month > 12 || month < 1 {
+            return Err(Error::InvalidInputData)
+        } else if day < 1 {
+            return Err(Error::InvalidInputData)
+        } else if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) && day > 31 {
+            return Err(Error::InvalidInputData)
+        } else if (month == 4 || month == 6 || month == 9 || month == 11) && day > 30 {
+            return Err(Error::InvalidInputData)
+        } else if month == 2 && day > 29 { // no checking for leap years
+            return Err(Error::InvalidInputData)
+        } 
+
+        let date_number: u16 = match format {
+            DDMM => day as u16 * 100 + month as u16,
+            MMDD => month as u16 * 100 + day as u16,
+        };
+
+        self.display_number(date_number)?;
+
+        match dot {            
+            true => self.display_dots([false, true, false, false])?, // dot at second position
+            false => self.display_dots([false, false, false, false])?,
+        }
+        
+
+        Ok(())
+    }
 
     /// Set the display mode: Scroll or Rotate (see documentation)
     pub fn set_mode(&mut self, mode: Mode) -> Result<(), Error<E>> {
