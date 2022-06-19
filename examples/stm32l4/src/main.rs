@@ -57,7 +57,7 @@ fn main() -> ! {
     akafugu.display_date(11,14, DateFormat::MMDD, true).unwrap();
 
     delay.delay_ms(3000_u32);
-
+   
 
     loop {
         
