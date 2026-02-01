@@ -17,7 +17,7 @@ This driver allows you to:
 - Display temperature or humidity, with settable lower/upper threshold
 
 ### TO DO:
-- [ ] test with other MCUs / Raspberry Pi
+- [x] test with other MCUs / Raspberry Pi
 - [ ] add a good example
 - [ ] read firmware version and number of digits (diagnostic functions)
 - [ ] display dots at selected positions
@@ -43,8 +43,6 @@ Please find additional examples using hardware in this repository: [examples]
 #![no_std]
 
 use akafugu_twidisplay::*:
-
-
 
 #[entry]
 fn main() -> ! {

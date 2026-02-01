@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ...
 
+## [0.2.0] - 2026-02-01
+
+### Updated
+- Uses Embedded HAL 1.0.0
+
+### Added
+- Example using ESP32C3 with Embassy
+
+
 ## [0.1.1] - 2021-11-14
 
 ### Added

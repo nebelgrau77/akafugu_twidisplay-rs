@@ -233,7 +233,9 @@ OTHER:
 
 use embedded_hal as hal;
 
-use hal::blocking::i2c::{Write, WriteRead};
+use hal::i2c::I2c;
+
+//use hal::blocking::i2c::{Write, WriteRead};
 
 /// All possible errors in this crate
 #[derive(Debug)]
@@ -305,7 +307,7 @@ pub struct TWIDisplay<I2C> {
 
 impl<I2C, E> TWIDisplay<I2C>
 where
-    I2C: Write<Error = E> + WriteRead<Error = E>,
+    I2C: I2c<Error = E>,
 {
     /// Create a new instance of the TWIDisplay driver.    
     pub fn new(i2c: I2C, dev_addr: u8) -> Self {
@@ -523,8 +525,8 @@ where
         }
 
         let date_number: u16 = match format {
-            DDMM => day as u16 * 100 + month as u16,
-            MMDD => month as u16 * 100 + day as u16,
+            DateFormat::DDMM => day as u16 * 100 + month as u16,
+            DateFormat::MMDD => month as u16 * 100 + day as u16,
         };
 
         self.display_number(date_number)?;
